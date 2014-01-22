@@ -1,5 +1,6 @@
 package gvsu;
 import robocode.*;
+import static robocode.util.Utils.normalRelativeAngleDegrees;
 //import java.awt.Color;
 
 // API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
@@ -28,10 +29,11 @@ public class AwesomeBot extends Robot
 			if (move){
 				move = false;
 				ahead(100);
-			}			
-			turnGunRight(360);
-			back(100);
-			turnGunRight(355);
+			} else {			
+				back(100);
+			}
+			turnRadarRight(360);
+			//turnGunRight(355);
 		}
 	}
 
@@ -39,16 +41,39 @@ public class AwesomeBot extends Robot
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
-		// Replace the next line with any behavior you would like
 		if (eEnergy == 0){
 			eEnergy = e.getEnergy();
 		} else if (eEnergy - e.getEnergy() < 3){
 			System.out.println("shot fired!");
 			move = true;
-		}
-		eEnergy = e.getEnergy();
+		} eEnergy = e.getEnergy();	
 		
-		fire(1.1);
+		// Calculate exact location of the robot
+		double absoluteBearing = getHeading() + e.getBearing();
+		//calculate next likely corner here
+		double bearingFromRadar = normalRelativeAngleDegrees(absoluteBearing - getRadarHeading());
+
+		// If it's close enough, fire!
+		if (Math.abs(bearingFromRadar) <= 3) {
+			turnRadarRight(bearingFromRadar);
+			// We check gun heat here, because calling fire()
+			// uses a turn, which could cause us to lose track
+			// of the other robot.
+			if (getGunHeat() == 0) {
+				//fire(Math.min(3 - Math.abs(bearingFromRadar), getEnergy() - .1));
+			}
+		} // otherwise just set the gun to turn.
+		// Note:  This will have no effect until we call scan()
+		else {
+			turnRadarRight(bearingFromRadar);
+		}
+		// Generates another scan event if we see a robot.
+		// We only need to call this if the gun (and therefore radar)
+		// are not turning.  Otherwise, scan is called automatically.
+		if (bearingFromRadar == 0) {
+			scan();
+		}	
+
 	}
 
 	/**
@@ -56,7 +81,7 @@ public class AwesomeBot extends Robot
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
 		// Replace the next line with any behavior you would like
-		back(10);
+		//back(10);
 	}
 	
 	/**
