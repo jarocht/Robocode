@@ -29,9 +29,9 @@ public class AwesomeBot extends AdvancedRobot
 		x = getX() - (getBattleFieldWidth() / 2.0);
 		turnRight(90.0 - getHeading());
 		ahead(-x);
-		y = getY() - (getBattleFieldHeight() / 2.0) + 25;
+		y = getY() - (getBattleFieldHeight() / 2.0);
 		turnRight(180.0 - getHeading());
-		ahead(y);
+		ahead(y - 65);
 		
 		// Robot main loop
 		while(true) {
@@ -54,38 +54,27 @@ public class AwesomeBot extends AdvancedRobot
 			//SetTurnRight(x); or SetTurnRight(-x);
 			setAhead(100);
 			setTurnRight(90.0);
-		} eEnergy = e.getEnergy();	
-		
+		} 
+		eEnergy = e.getEnergy();	
+		double absoluteBearing = getHeading() + e.getBearing();
+		if (eEnergy < 3){
+				double bearingFromGun = normalRelativeAngleDegrees(absoluteBearing - getGunHeading());
+				turnGunRight(bearingFromGun);
+				fire(2);
+		}
+
 		// Calculate exact location of the robot
-		double absoluteBearing = getHeading() + e.getBearing(); //System.out.println(absoluteBearing);
 		double bearingFromRadar = normalRelativeAngleDegrees(absoluteBearing - getRadarHeading());
 		turnRadarRight(bearingFromRadar);
 				
-		//calculate next likely corner here
-		System.out.println("Headed to:"+nextCornerHeading(e));		
 		//Turn gun to that corner
 		double cornerHeading = nextCornerHeading(e); //Trig HERE
-		
-		//double bearingFromGun = cornerHeading - getGunHeading();//normalRelativeAngleDegrees(cornerHeading - getGunHeading());
-		turnGunRight(cornerHeading - getGunHeading());
-		//fire(3);
-		/* If it's close enough, fire!
-		if (Math.abs(bearingFromRadar) <= 20) {
-			turnRadarRight(bearingFromRadar);
-			// We check gun heat here, because calling fire()
-			// uses a turn, which could cause us to lose track
-			// of the other robot.
-			if (getGunHeat() == 0) {
-				//fire(Math.min(3 - Math.abs(bearingFromRadar), getEnergy() - .1));
-			}
-		} // otherwise just set the gun to turn.
-		// Note:  This will have no effect until we call scan()
-		else {
-			turnRadarRight(bearingFromRadar);
-		}*/
-		// Generates another scan event if we see a robot.
-		// We only need to call this if the gun (and therefore radar)
-		// are not turning.  Otherwise, scan is called automatically.
+		double bearingFromGun = cornerHeading - getGunHeading();
+		if (bearingFromGun != 0)
+			turnGunRight(bearingFromGun);
+		else
+			fire(2);
+
 		if (bearingFromRadar == 0) {
 			scan();
 		}	
@@ -97,7 +86,8 @@ public class AwesomeBot extends AdvancedRobot
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
 		// Replace the next line with any behavior you would like
-		//back(10);
+		setAhead(-100);
+		setTurnLeft(90);
 	}
 	
 	/**
@@ -113,37 +103,28 @@ public class AwesomeBot extends AdvancedRobot
 		setAdjustRadarForRobotTurn(var);
 		//Radar doesn't turn with gun
 		setAdjustRadarForGunTurn(var);
+		//Gun doesn't turn with Robot
+		setAdjustGunForRobotTurn(var);
 	}
 	public double nextCornerHeading(ScannedRobotEvent e){
 		switch((int)e.getHeading()){
 			case 0:
 			case 360:
-				return Math.toDegrees(Math.atan( (getBattleFieldHeight()-getY()) / (0.0-getX())));
+				System.out.println("Top Left");
+				return Math.toDegrees(Math.atan( (getBattleFieldHeight()-getY()) / (getX()-0.0))) + 270.0;
 			case 90:
-				return Math.toDegrees(Math.atan( (getBattleFieldHeight()-getY()) / (getBattleFieldWidth()-getX())));
+				System.out.println("Top Right");
+				return 90 - Math.toDegrees(Math.atan( (getBattleFieldHeight()-getY()) / (getBattleFieldWidth()-getX())));
 			case 180:
-				return Math.toDegrees(Math.atan( (0.0-getY()) / (getBattleFieldWidth()-getX())));
+				System.out.println("Bottom Right");
+				return Math.toDegrees(Math.atan( (getY()-0.0) / (getBattleFieldWidth()-getX()))) + 90.0;
 			case 270:
-				return Math.toDegrees(Math.atan( (0.0-getY()) / (00.0-getX())));
+				System.out.println("Bottom Left");
+				return 270 - Math.toDegrees(Math.atan( (getY()-0.0) / (getX()-0.0)));
 			default:
+				System.out.println("In Transition!");
 				return getGunHeading();
 		}	
-
-	}
-	public String nextCorner(ScannedRobotEvent e){
-		switch((int)e.getHeading()){
-			case 0:
-			case 360:
-				return "Top Left";
-			case 90:
-				return "Top Right";
-			case 180:
-				return "Bottom Right";
-			case 270:
-				return "Bottom Left";
-			default:
-				return "In Transition!";
-		}		
 
 	}
 }
