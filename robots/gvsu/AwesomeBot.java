@@ -44,6 +44,7 @@ public class AwesomeBot extends AdvancedRobot
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
+		
 		//each bullet fired (with walls) uses 2 energy
 		if (eEnergy - e.getEnergy() == 2){
 			count++;
@@ -56,11 +57,16 @@ public class AwesomeBot extends AdvancedRobot
 		} eEnergy = e.getEnergy();	
 		
 		// Calculate exact location of the robot
-		double absoluteBearing = getHeading() + e.getBearing();
-		//System.out.println(absoluteBearing);
-		//calculate next likely corner here
+		double absoluteBearing = getHeading() + e.getBearing(); //System.out.println(absoluteBearing);
 		double bearingFromRadar = normalRelativeAngleDegrees(absoluteBearing - getRadarHeading());
-
+		turnRadarRight(bearingFromRadar);
+				
+		//calculate next likely corner here
+		System.out.println("Headed to:"+nextCornerHeading(e));		
+		//Turn gun to that corner
+		double cBearing; //Trig HERE
+		
+		double bearingFromGun = normalRelativeAngleDegrees(cBearing - getGunHeading());
 		// If it's close enough, fire!
 		if (Math.abs(bearingFromRadar) <= 20) {
 			turnRadarRight(bearingFromRadar);
@@ -105,6 +111,38 @@ public class AwesomeBot extends AdvancedRobot
 		setAdjustRadarForRobotTurn(var);
 		//Radar doesn't turn with gun
 		setAdjustRadarForGunTurn(var);
+	}
+	public double nextCornerHeading(ScannedRobotEvent e){
+		switch((int)e.getHeading()){
+			case 0:
+			case 360:
+				return Math.toDegrees(Math.atan( (getY()-0) / (getX()-0) ) );
+			case 90:
+				return Math.toDegrees(Math.atan((getY()-0)/(getX()-getBattleFieldWidth()));
+			case 180:
+				return	Math.toDegrees(Math.atan((getY()-getBattleFieldHeight()) / (getX()-getBattleFieldWidth()));
+			case 270:
+				return Math.toDegrees(Math.atan((getY()-getBattleFieldHeight())/(getX()-0)));
+			default:
+				return -1;
+		}	
+
+	}
+	public String nextCorner(ScannedRobotEvent e){
+		switch((int)e.getHeading()){
+			case 0:
+			case 360:
+				return "Top Left";
+			case 90:
+				return "Top Right";
+			case 180:
+				return "Bottom Right";
+			case 270:
+				return "Bottom Left";
+			default:
+				return "In Transition!";
+		}		
+
 	}
 }
 
