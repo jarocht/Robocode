@@ -29,7 +29,7 @@ public class AwesomeBot extends AdvancedRobot
 		x = getX() - (getBattleFieldWidth() / 2.0);
 		turnRight(90.0 - getHeading());
 		ahead(-x);
-		y = getY() - (getBattleFieldHeight() / 2.0);
+		y = getY() - (getBattleFieldHeight() / 2.0) + 25;
 		turnRight(180.0 - getHeading());
 		ahead(y);
 		
@@ -64,10 +64,12 @@ public class AwesomeBot extends AdvancedRobot
 		//calculate next likely corner here
 		System.out.println("Headed to:"+nextCornerHeading(e));		
 		//Turn gun to that corner
-		double cBearing; //Trig HERE
+		double cornerHeading = nextCornerHeading(e); //Trig HERE
 		
-		double bearingFromGun = normalRelativeAngleDegrees(cBearing - getGunHeading());
-		// If it's close enough, fire!
+		//double bearingFromGun = cornerHeading - getGunHeading();//normalRelativeAngleDegrees(cornerHeading - getGunHeading());
+		turnGunRight(cornerHeading - getGunHeading());
+		//fire(3);
+		/* If it's close enough, fire!
 		if (Math.abs(bearingFromRadar) <= 20) {
 			turnRadarRight(bearingFromRadar);
 			// We check gun heat here, because calling fire()
@@ -80,7 +82,7 @@ public class AwesomeBot extends AdvancedRobot
 		// Note:  This will have no effect until we call scan()
 		else {
 			turnRadarRight(bearingFromRadar);
-		}
+		}*/
 		// Generates another scan event if we see a robot.
 		// We only need to call this if the gun (and therefore radar)
 		// are not turning.  Otherwise, scan is called automatically.
@@ -116,15 +118,15 @@ public class AwesomeBot extends AdvancedRobot
 		switch((int)e.getHeading()){
 			case 0:
 			case 360:
-				return Math.toDegrees(Math.atan( (getY()-0) / (getX()-0) ) );
+				return Math.toDegrees(Math.atan( (getBattleFieldHeight()-getY()) / (0.0-getX())));
 			case 90:
-				return Math.toDegrees(Math.atan((getY()-0)/(getX()-getBattleFieldWidth()));
+				return Math.toDegrees(Math.atan( (getBattleFieldHeight()-getY()) / (getBattleFieldWidth()-getX())));
 			case 180:
-				return	Math.toDegrees(Math.atan((getY()-getBattleFieldHeight()) / (getX()-getBattleFieldWidth()));
+				return Math.toDegrees(Math.atan( (0.0-getY()) / (getBattleFieldWidth()-getX())));
 			case 270:
-				return Math.toDegrees(Math.atan((getY()-getBattleFieldHeight())/(getX()-0)));
+				return Math.toDegrees(Math.atan( (0.0-getY()) / (00.0-getX())));
 			default:
-				return -1;
+				return getGunHeading();
 		}	
 
 	}
