@@ -1,5 +1,6 @@
 package gvsu;
 import robocode.*;
+import robocode.AdvancedRobot;
 import java.awt.Color;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 //import java.awt.Color;
@@ -9,37 +10,33 @@ import static robocode.util.Utils.normalRelativeAngleDegrees;
 /**
  * AwesomeBot - a robot by (your name here)
  */
-public class AwesomeBot extends Robot
+public class AwesomeBot extends AdvancedRobot
 {
-	Radar radar = new Radar();
-	public double count =0; //for testing how often enemy fires
-	private double eEnergy;
-	private boolean move;
+	//Radar radar = new Radar();
+	public double count = 0; //for testing how often enemy fires
+	private double eEnergy = 100;
+	private double x,y;
 	/**
 	 * run: AwesomeBot's default behavior
 	 */
 	public void run() {
 		//detaches radar from robot and gun movement
-		radar.detach();
-
+		detach(true);
 		// Initialization of the robot should be put here
-		eEnergy = 0;
-		// After trying out your robot, try uncommenting the import at the top,
-		// and the next line:
-
-		 setColors(Color.pink,Color.pink,Color.pink); // body,gun,radar
-
+		 setColors(Color.GRAY,Color.RED,Color.ORANGE); // body,gun,radar
+		
+		//move to center of map
+		x = getX() - (getBattleFieldWidth() / 2.0);
+		turnRight(90.0 - getHeading());
+		ahead(-x);
+		y = getY() - (getBattleFieldHeight() / 2.0);
+		turnRight(180.0 - getHeading());
+		ahead(y);
+		
 		// Robot main loop
 		while(true) {
 			// Replace the next 4 lines with any behavior you would like
-			if (move){
-				move = false;
-				ahead(100);
-			} else {			
-				back(100);
-			}
 			turnRadarRight(360);
-			//turnGunRight(355);
 		}
 	}
 
@@ -47,19 +44,20 @@ public class AwesomeBot extends Robot
 	 * onScannedRobot: What to do when you see another robot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
-		if (eEnergy == 0){
-			eEnergy = e.getEnergy();
-			//each bullet fired (with walls) uses 2 energy
-		} else if (eEnergy - e.getEnergy() == 2){
+		//each bullet fired (with walls) uses 2 energy
+		if (eEnergy - e.getEnergy() == 2){
 			count++;
-			System.out.println(count);
+			//System.out.println(count);
 			System.out.println("shot fired!");
-			move = true;
+			//Calculate movement here and use setAhead(x);
+			//SetTurnRight(x); or SetTurnRight(-x);
+			setAhead(100);
+			setTurnRight(90.0);
 		} eEnergy = e.getEnergy();	
 		
 		// Calculate exact location of the robot
 		double absoluteBearing = getHeading() + e.getBearing();
-		System.out.println(absoluteBearing);
+		//System.out.println(absoluteBearing);
 		//calculate next likely corner here
 		double bearingFromRadar = normalRelativeAngleDegrees(absoluteBearing - getRadarHeading());
 
@@ -70,7 +68,7 @@ public class AwesomeBot extends Robot
 			// uses a turn, which could cause us to lose track
 			// of the other robot.
 			if (getGunHeat() == 0) {
-				fire(Math.min(3 - Math.abs(bearingFromRadar), getEnergy() - .1));
+				//fire(Math.min(3 - Math.abs(bearingFromRadar), getEnergy() - .1));
 			}
 		} // otherwise just set the gun to turn.
 		// Note:  This will have no effect until we call scan()
@@ -83,7 +81,7 @@ public class AwesomeBot extends Robot
 		if (bearingFromRadar == 0) {
 			scan();
 		}	
-
+		
 	}
 
 	/**
@@ -102,16 +100,11 @@ public class AwesomeBot extends Robot
 		//back(20);
 	}	
 
-
-	class Radar{
-		public void detach(){
-			//Radar doesn't turn with robot
-			setAdjustRadarForRobotTurn(true);
-			//Radar doesn't turn with gun
-			setAdjustRadarForGunTurn(true);
-		}
-		
-	
+	public void detach(Boolean var){
+		//Radar doesn't turn with robot
+		setAdjustRadarForRobotTurn(var);
+		//Radar doesn't turn with gun
+		setAdjustRadarForGunTurn(var);
 	}
 }
 
