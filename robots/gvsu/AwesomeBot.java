@@ -3,86 +3,59 @@ import robocode.*;
 import robocode.AdvancedRobot;
 import java.awt.Color;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
-//import java.awt.Color;
 
 // API help : http://robocode.sourceforge.net/docs/robocode/robocode/Robot.html
 
 /**
  * AwesomeBot - a robot by (your name here)
  */
-public class AwesomeBot extends AdvancedRobot
-{
-	//Radar radar = new Radar();
-	public double count = 0; //for testing how often enemy fires
+public class AwesomeBot extends AdvancedRobot {
 	private double eEnergy = 100;
 	private double x,y;
+	private boolean center;
+	private int move = 100;
 	/**
 	 * run: AwesomeBot's default behavior
 	 */
 	public void run() {
-	
-		//allows the robot to wait till it's at the center before using its radar
-		//boolean center = false;
 		//detaches radar from robot and gun movement
 		detach(true);
 		// Initialization of the robot should be put here
-		 setColors(Color.GRAY,Color.RED,Color.ORANGE); // body,gun,radar
-		
+		setColors(Color.GRAY,Color.RED,Color.ORANGE); // body,gun,radar
 		//move to center of map
-		x = getX() - (getBattleFieldWidth() / 2.0);
-		turnRight(90.0 - getHeading());
-		ahead(-x);
-		y = getY() - (getBattleFieldHeight() / 2.0);
-		turnRight(180.0 - getHeading());
-		ahead(y - 65);
+		moveToCenter();
 		
-		// Robot main loop
 		while(true) {
-			// Replace the next 4 lines with any behavior you would like
 			turnRadarRight(360);
 		}
 	}
 
 	/**
-	 * onScannedRobot: What to do when you see another robot
+	 * 
 	 */
 	public void onScannedRobot(ScannedRobotEvent e) {
-		
-		//each bullet fired (with walls) uses 2 energy
-		if (eEnergy - e.getEnergy() == 2){
-			count++;
-			//System.out.println(count);
+		if (!center) return;		
+		//Always be perpendicular to enemy travel
+		setTurnRight(90 + e.getBearing()); 	
+		//Walls always fires shots that use 2 energy
+		if (eEnergy - e.getEnergy() == 2){ 
 			System.out.println("shot fired!");
-			//Calculate movement here and use setAhead(x);
-			//SetTurnRight(x); or SetTurnRight(-x);
-			setAhead(100);
-			setTurnRight(90.0);
+			setAhead(move);
+			move *= -1;
 		} 
-		eEnergy = e.getEnergy();	
-		double absoluteBearing = getHeading() + e.getBearing();
-		if (eEnergy < 3){
-				double bearingFromGun = normalRelativeAngleDegrees(absoluteBearing - getGunHeading());
-				turnGunRight(bearingFromGun);
-				
-		}
-
-		// Calculate exact location of the robot
-		double bearingFromRadar = normalRelativeAngleDegrees(absoluteBearing - getRadarHeading());
-		turnRadarRight(bearingFromRadar);
-				
-		//Turn gun to that corner
+		eEnergy = e.getEnergy(); //Update enemy energy to prevent fire mis-detection
 		
-		double cornerHeading = nextCornerHeading(e); //Trig HERE
-
-		double bearingFromGun = cornerHeading - getGunHeading();
-		if (bearingFromGun != 0)
+		//Get enemy bearing from our heading
+		double absoluteBearing = getHeading() + e.getBearing();
+		// Follow Target with Radar
+		turnRadarRight(normalRelativeAngleDegrees(absoluteBearing - getRadarHeading()));
+		if (eEnergy  == 0.0){//Enemy is disabled, turn gun and fire
+			double bearingFromGun = normalRelativeAngleDegrees(absoluteBearing - getGunHeading());
 			turnGunRight(bearingFromGun);
-		else
-			//fire(2);
-
-		if (bearingFromRadar == 0) {
-			scan();
-		}	
+			fire(1.0);
+		} else {//Enemy moving toward corner, target predicted corner
+			turnGunRight(nextCornerHeading(e) - getGunHeading());
+		}		
 		
 	}
 
@@ -91,8 +64,6 @@ public class AwesomeBot extends AdvancedRobot
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
 		// Replace the next line with any behavior you would like
-		setAhead(-100);
-		setTurnLeft(90);
 	}
 	
 	/**
@@ -100,7 +71,7 @@ public class AwesomeBot extends AdvancedRobot
 	 */
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
-		//back(20);
+		moveToCenter();
 	}	
 
 	public void detach(Boolean var){
@@ -139,10 +110,28 @@ public class AwesomeBot extends AdvancedRobot
 				return 270 - Math.toDegrees(Math.atan( (getY()-0.0) / (getX()-0.0)));
 
 			default:
-				System.out.println("In Transition!");
+				//System.out.println("In Transition!");
 				return getGunHeading();
 		}	
 
+	}
+	
+	public boolean moveToCenter(){
+		int xCenter, yCenter;
+		xCenter = (int)(getBattleFieldWidth() / 2.0);
+		yCenter = (int)(getBattleFieldHeight() / 2.0);
+		System.out.println(xCenter + "," + yCenter);	
+		while (!(Math.ceil(getX()) == xCenter && Math.ceil(getY()) == yCenter)){
+			center = false;
+			x = getX() - xCenter;
+			turnRight(90.0 - getHeading());
+			ahead(-x);
+			y = getY() - yCenter;
+			turnRight(180.0 - getHeading());
+			ahead(y);
+		}
+		center = true;
+		return center;			
 	}
 	
 	public void getCoordinates(String side, ScannedRobotEvent e){
